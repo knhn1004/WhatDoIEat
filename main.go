@@ -32,11 +32,11 @@ func main() {
 	bot.AddCommand(&slacker.CommandDefinition{
 		Command: "ping",
 		Handler: func(ctx *slacker.CommandContext) {
-			t1, _ := ctx.Response().Reply("about to be replaced")
+			t1, _ := ctx.Response().Reply("about to be replaced 🚧️")
 
 			time.Sleep(time.Second)
 
-			ctx.Response().Reply("pong", slacker.WithReplace(t1))
+			ctx.Response().Reply("pong🏓️", slacker.WithReplace(t1))
 		},
 	})
 	bot.AddCommand(&slacker.CommandDefinition{
@@ -44,11 +44,11 @@ func main() {
 		Description: "Upload a sentence!",
 		Handler: func(ctx *slacker.CommandContext) {
 			sentence := ctx.Request().Param("sentence")
-			slackClient := ctx.SlackClient()
+			api := ctx.SlackClient()
 			event := ctx.Event()
 
-			slackClient.PostMessage(event.ChannelID, slack.MsgOptionText("Uploading file ...", false))
-			_, err := slackClient.UploadFile(slack.FileUploadParameters{Content: sentence, Channels: []string{event.ChannelID}})
+			api.PostMessage(event.ChannelID, slack.MsgOptionText("📄️ Uploading file ...", false))
+			_, err := api.UploadFile(slack.FileUploadParameters{Content: sentence, Channels: []string{event.ChannelID}})
 			if err != nil {
 				ctx.Response().ReplyError(err)
 			}
@@ -63,7 +63,7 @@ func main() {
 			attachments := []slack.Attachment{}
 			attachments = append(attachments, slack.Attachment{
 				Color:      "good",
-				AuthorName: "Raed Shomali",
+				AuthorName: "👨️ Raed Shomali",
 				Title:      "Attachment Title",
 				Text:       "Attachment Text",
 			})
