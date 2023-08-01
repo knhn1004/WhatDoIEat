@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cohere-ai/cohere-go"
 	"github.com/joho/godotenv"
 	supa "github.com/nedpals/supabase-go"
 	"github.com/shomali11/slacker/v2"
@@ -18,6 +19,7 @@ var (
 	appToken    string
 	supabaseUrl string
 	supabaseKey string
+	cohereKey   string
 )
 
 type ErrorType struct {
@@ -36,7 +38,13 @@ func main() {
 	)
 
 	supabase := supa.CreateClient(supabaseUrl, supabaseKey)
-	fmt.Printf("supabase: %v\n", supabase)
+	fmt.Printf("supabase: %v\n", supabase) // TODO: remove this
+
+	co, err := cohere.CreateClient(cohereKey)
+	if err != nil {
+		fmt.Printf("cohere error: %v\n", err)
+	}
+	fmt.Printf("cohere: %v\n", co) // TODO: remove this
 
 	bot.AddCommand(&slacker.CommandDefinition{
 		Command: "ping",
@@ -94,7 +102,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := bot.Listen(ctx)
+	err = bot.Listen(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,33 +114,41 @@ func loadEnv() error {
 		log.Fatal("Error loading .env file")
 		return err
 	}
+	var errMsg string
 
 	botToken = os.Getenv("SLACK_BOT_TOKEN")
 	if botToken == "" {
-		msg := "SLACK_BOT_TOKEN is required"
-		log.Fatal(msg)
-		return &ErrorType{message: msg}
+		errMsg = "SLACK_BOT_TOKEN is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
 	}
 
 	appToken = os.Getenv("SLACK_APP_TOKEN")
 	if appToken == "" {
-		msg := "SLACK_APP_TOKEN is required"
-		log.Fatal(msg)
-		return &ErrorType{message: msg}
+		errMsg = "SLACK_APP_TOKEN is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
 	}
 
 	supabaseUrl = os.Getenv("SUPABASE_URL")
 	if supabaseUrl == "" {
-		msg := "SUPABASE_URL is required"
-		log.Fatal(msg)
-		return &ErrorType{message: msg}
+		errMsg = "SUPABASE_URL is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
 	}
 
 	supabaseKey = os.Getenv("SUPABASE_ADMIN_KEY")
 	if supabaseKey == "" {
-		msg := "SUPABASE_KEY is required"
-		log.Fatal(msg)
-		return &ErrorType{message: msg}
+		errMsg = "SUPABASE_KEY is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
+	}
+
+	cohereKey = os.Getenv("COHERE_API_KEY")
+	if cohereKey == "" {
+		errMsg = "COHERE_API_KEY is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
 	}
 
 	return nil
