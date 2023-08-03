@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/cohere-ai/cohere-go"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/minoplhy/duckduckgo-images-api"
 	supa "github.com/nedpals/supabase-go"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/shomali11/slacker/v2"
@@ -151,7 +153,7 @@ func main() {
 			fmt.Println("URL: ", business.URL)
 			fmt.Println("Rating: ", business.Rating)
 			fmt.Println("Location: ", business.Location)
-			fmt.Println("Map: ", GenerateGoogleMapsURL(business.Location))
+			fmt.Println("Map: ", genGoogleMapsURL(business.Location))
 			fmt.Println("Image: ", business.ImageURL)
 		}
 	}
@@ -400,7 +402,7 @@ func getRestaurants(restaurantType, location string, options map[string]string) 
 	return yelpResp.Businesses, nil
 }
 
-func GenerateGoogleMapsURL(loc Location) string {
+func genGoogleMapsURL(loc Location) string {
 	baseURL := "https://www.google.com/maps/search/?api=1&query="
 
 	// Concatenate address details
@@ -410,4 +412,40 @@ func GenerateGoogleMapsURL(loc Location) string {
 	encodedAddress := url.QueryEscape(address)
 
 	return baseURL + encodedAddress
+}
+
+func getImageUrlForRecipe(recipeName string, supabase *supa.Client) (string, error) {
+	var img string
+	serp := goduckgo.Search(goduckgo.Query{Keyword: recipeName})
+	if len(serp.Results) > 0 {
+		img = serp.Results[0].Image
+	}
+	if img == "" {
+		return "", fmt.Errorf("no images found for recipe: %s", recipeName)
+	}
+	// download image data
+	resp, err := http.Get(img)
+	if err != nil {
+		return "", fmt.Errorf("error downloading image: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var imgBuffer bytes.Buffer
+	_, err = io.Copy(&imgBuffer, resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading image data: %v", err)
+	}
+
+	// get file extension
+	imgParts := strings.Split(img, ".")
+	imgType := imgParts[len(imgParts)-1] // get last part, which should be the file extension
+
+	// random filename
+	filename := fmt.Sprintf("%s.%s", uuid.New().String(), imgType)
+	supabase.Storage.From("recipe-images").Upload(filename, &imgBuffer)
+
+	supabaseUrl := os.Getenv("SUPABASE_URL")
+	url := fmt.Sprintf("%s/storage/v1/object/public/recipe-images/%s", supabaseUrl, filename)
+
+	return url, nil
 }
