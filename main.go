@@ -53,12 +53,23 @@ type YelpResponse struct {
 }
 
 type Business struct {
-	Name    string  `json:"name"`
-	Address string  `json:"address1"`
-	City    string  `json:"city"`
-	State   string  `json:"state"`
-	ZipCode string  `json:"zip_code"`
-	Rating  float64 `json:"rating"`
+	Location Location `json:"location"`
+	Name     string   `json:"name"`
+	State    string   `json:"state"`
+	Phone    string   `json:"phone"`
+	URL      string   `json:"url"`
+	ImageURL string   `json:"image_url"`
+	Rating   float64  `json:"rating"`
+}
+
+type Location struct {
+	Address1 string `json:"address1"`
+	Address2 string `json:"address2"`
+	Address3 string `json:"address3"`
+	City     string `json:"city"`
+	ZipCode  string `json:"zip_code"`
+	State    string `json:"state"`
+	Country  string `json:"country"`
 }
 
 type ErrorType struct {
@@ -128,13 +139,21 @@ func main() {
 	options := map[string]string{
 		"radius":  "10000", // 10km
 		"sort_by": "rating",
-		"limit":   "10",
+		"limit":   "5",
 	}
 	businesses, err = getRestaurants("Japanese", "", options)
 	if err != nil {
 		fmt.Printf("getRestaurants error: %v\n", err)
 	} else {
-		fmt.Printf("businesses: %v\n", businesses)
+		for _, business := range businesses {
+			fmt.Println("Name: ", business.Name)
+			fmt.Println("Phone: ", business.Phone)
+			fmt.Println("URL: ", business.URL)
+			fmt.Println("Rating: ", business.Rating)
+			fmt.Println("Location: ", business.Location)
+			fmt.Println("Map: ", GenerateGoogleMapsURL(business.Location))
+			fmt.Println("Image: ", business.ImageURL)
+		}
 	}
 
 	bot.AddCommand(&slacker.CommandDefinition{
@@ -379,4 +398,16 @@ func getRestaurants(restaurantType, location string, options map[string]string) 
 	}
 
 	return yelpResp.Businesses, nil
+}
+
+func GenerateGoogleMapsURL(loc Location) string {
+	baseURL := "https://www.google.com/maps/search/?api=1&query="
+
+	// Concatenate address details
+	address := loc.Address1 + " " + loc.Address2 + " " + loc.Address3 + " " + loc.City + " " + loc.ZipCode + " " + loc.State + " " + loc.Country
+
+	// URL encode the address
+	encodedAddress := url.QueryEscape(address)
+
+	return baseURL + encodedAddress
 }
