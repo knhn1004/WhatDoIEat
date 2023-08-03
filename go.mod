@@ -13,6 +13,7 @@ require (
 	github.com/nedpals/supabase-go v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	github.com/sashabaranov/go-openai v1.14.1 // indirect
 	github.com/shomali11/commander v0.0.0-20220716022157-b5248c76541a // indirect
 	github.com/shomali11/proper v0.0.0-20190608032528-6e70a05688e7 // indirect
 	github.com/shomali11/slacker/v2 v2.0.0-alpha1 // indirect
