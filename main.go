@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -23,6 +27,7 @@ var (
 	supabaseUrl string
 	supabaseKey string
 	cohereKey   string
+	yelpAPIKey  string
 )
 
 type Ingredient struct {
@@ -39,6 +44,21 @@ type Recipe struct {
 	Date             string       `json:"date"`
 	Ingredients      []Ingredient `json:"ingredients"`
 	Steps            []string     `json:"steps"`
+}
+
+const yelpAPIEndpoint = "https://api.yelp.com/v3/businesses/search"
+
+type YelpResponse struct {
+	Businesses []Business `json:"businesses"`
+}
+
+type Business struct {
+	Name    string  `json:"name"`
+	Address string  `json:"address1"`
+	City    string  `json:"city"`
+	State   string  `json:"state"`
+	ZipCode string  `json:"zip_code"`
+	Rating  float64 `json:"rating"`
 }
 
 type ErrorType struct {
@@ -103,6 +123,19 @@ func main() {
 	} */
 
 	// genRecipeOpenAI()
+
+	var businesses []Business
+	options := map[string]string{
+		"radius":  "10000", // 10km
+		"sort_by": "rating",
+		"limit":   "10",
+	}
+	businesses, err = getRestaurants("Japanese", "", options)
+	if err != nil {
+		fmt.Printf("getRestaurants error: %v\n", err)
+	} else {
+		fmt.Printf("businesses: %v\n", businesses)
+	}
 
 	bot.AddCommand(&slacker.CommandDefinition{
 		Command: "ping",
@@ -212,6 +245,13 @@ func loadEnv() error {
 		return &ErrorType{message: errMsg}
 	}
 
+	yelpAPIKey, ok = os.LookupEnv("YELP_API_KEY")
+	if !ok {
+		errMsg = "YELP_API_KEY is required"
+		log.Fatal(errMsg)
+		return &ErrorType{message: errMsg}
+	}
+
 	return nil
 }
 
@@ -292,4 +332,51 @@ func genRecipeOpenAI() ([]Recipe, error) {
 	}
 
 	return recipes, nil
+}
+
+func getRestaurants(restaurantType, location string, options map[string]string) ([]Business, error) {
+	if location == "" {
+		location = "San Jose"
+	}
+
+	params := url.Values{}
+	params.Add("term", restaurantType)
+	params.Add("location", location)
+
+	for key, value := range options {
+		params.Add(key, value)
+	}
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", yelpAPIEndpoint+"?"+params.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+yelpAPIKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-200 response status: %d %s. Response body: %s", resp.StatusCode, resp.Status, buf.String())
+	}
+
+	var yelpResp YelpResponse
+	err = json.Unmarshal(buf.Bytes(), &yelpResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return yelpResp.Businesses, nil
 }
