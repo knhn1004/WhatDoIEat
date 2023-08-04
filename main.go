@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/knhn1004/WhatDoIEat/internal/bot"
 	"github.com/knhn1004/WhatDoIEat/internal/config"
-	"github.com/knhn1004/WhatDoIEat/internal/models"
 	"github.com/knhn1004/WhatDoIEat/internal/services"
 )
 
@@ -16,10 +14,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	botToken := config.BotToken
-	appToken := config.AppToken
 
-	bot.InitializeBot(botToken, appToken)
+	bot.InitializeBot(config.BotToken, config.AppToken)
 	services.StartServices()
 
 	/* recipes, err := services.GenRecipeOpenAI()
@@ -35,7 +31,7 @@ func main() {
 		}
 	} */
 
-	var businesses []models.Restaurant
+	/* var businesses []models.Restaurant
 	options := map[string]string{
 		"radius":  "10000", // 10km
 		"sort_by": "rating",
@@ -54,7 +50,7 @@ func main() {
 			fmt.Println("Map: ", services.GenGoogleMapsURL(business.Location))
 			fmt.Println("Image: ", business.ImageURL)
 		}
-	}
+	} */
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

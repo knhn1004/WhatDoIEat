@@ -15,13 +15,20 @@ import (
 )
 
 // Supabase client
-var supabaseClient *supabase.Client
+var (
+	supabaseClient *supabase.Client
+	supabaseInit   bool
+)
 
 // Initialize Supabase client
 func InitSupabase() {
 	supabaseClient = supabase.CreateClient(config.SupabaseURL, config.SupabaseKey)
-
-	fmt.Printf("supabase: %v\n", supabaseClient) // TODO: remove this
+	if supabaseClient == nil {
+		fmt.Println("supabase client is nil")
+	} else {
+		fmt.Printf("supabase: %v\n", supabaseClient) // TODO: remove this
+		supabaseInit = true
+	}
 }
 
 func uploadImageFromUrl(img string) (string, error) {
@@ -50,4 +57,11 @@ func uploadImageFromUrl(img string) (string, error) {
 	url := fmt.Sprintf("%s/storage/v1/object/public/recipe-images/%s", supabaseUrl, filename)
 
 	return url, nil
+}
+
+func GetSupabaseClient() *supabase.Client {
+	if !supabaseInit {
+		InitSupabase()
+	}
+	return supabaseClient
 }
