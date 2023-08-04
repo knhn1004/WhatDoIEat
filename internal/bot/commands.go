@@ -18,12 +18,12 @@ var (
 	}
 
 	UploadCmd = &slacker.CommandDefinition{
-		Command: "upload",
+		Command: "upload <sentence>",
 		Handler: handleUpload,
 	}
 
 	EchoCmd = &slacker.CommandDefinition{
-		Command: "echo",
+		Command: "echo {word}",
 		Handler: handleEcho,
 	}
 )
@@ -46,6 +46,7 @@ func handleUpload(ctx *slacker.CommandContext) {
 
 	_, err := api.UploadFile(slack.FileUploadParameters{
 		Content:  sentence,
+		Filename: "sentence.txt",
 		Channels: []string{event.ChannelID},
 	})
 	if err != nil {
