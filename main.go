@@ -14,21 +14,12 @@ import (
 
 	"github.com/cohere-ai/cohere-go"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"github.com/minoplhy/duckduckgo-images-api"
 	supa "github.com/nedpals/supabase-go"
 	openai "github.com/sashabaranov/go-openai"
 
 	"github.com/knhn1004/WhatDoIEat/internal/bot"
-)
-
-var (
-	botToken    string
-	appToken    string
-	supabaseUrl string
-	supabaseKey string
-	cohereKey   string
-	yelpAPIKey  string
+	"github.com/knhn1004/WhatDoIEat/internal/config"
 )
 
 type Ingredient struct {
@@ -82,14 +73,19 @@ func (e *ErrorType) Error() string {
 }
 
 func main() {
-	loadEnv()
+	err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	botToken := config.BotToken
+	appToken := config.AppToken
 
 	bot.InitializeBot(botToken, appToken)
 
-	supabase := supa.CreateClient(supabaseUrl, supabaseKey)
+	supabase := supa.CreateClient(config.SupabaseURL, config.SupabaseURL)
 	fmt.Printf("supabase: %v\n", supabase) // TODO: remove this
 
-	co, err := cohere.CreateClient(cohereKey)
+	co, err := cohere.CreateClient(config.CohereKey)
 	if err != nil {
 		fmt.Printf("cohere error: %v\n", err)
 	}
@@ -161,66 +157,8 @@ func main() {
 	bot.Start(ctx)
 }
 
-func loadEnv() error {
-	err := godotenv.Load(".env.local")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-		return err
-	}
-	var errMsg string
-	var ok bool
-
-	botToken, ok = os.LookupEnv("SLACK_BOT_TOKEN")
-	if !ok {
-		errMsg = "SLACK_BOT_TOKEN is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	appToken, ok = os.LookupEnv("SLACK_APP_TOKEN")
-	if !ok {
-		errMsg = "SLACK_APP_TOKEN is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	supabaseUrl, ok = os.LookupEnv("SUPABASE_URL")
-	if !ok {
-		errMsg = "SUPABASE_URL is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	supabaseKey, ok = os.LookupEnv("SUPABASE_ADMIN_KEY")
-	if !ok {
-		errMsg = "SUPABASE_KEY is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	cohereKey, ok = os.LookupEnv("COHERE_API_KEY")
-	if !ok {
-		errMsg = "COHERE_API_KEY is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	yelpAPIKey, ok = os.LookupEnv("YELP_API_KEY")
-	if !ok {
-		errMsg = "YELP_API_KEY is required"
-		log.Fatal(errMsg)
-		return &ErrorType{message: errMsg}
-	}
-
-	return nil
-}
-
 func genRecipeOpenAI() ([]Recipe, error) {
-	openaiKey, ok := os.LookupEnv("OPENAI_API_KEY")
-	if !ok {
-		log.Fatal("OPENAI_API_KEY is required")
-	}
-	client := openai.NewClient(openaiKey)
+	client := openai.NewClient(config.OpenAIKey)
 
 	sysPrompt := `
             assistant is an AI nutritionist
@@ -314,7 +252,7 @@ func getRestaurants(restaurantType, location string, options map[string]string) 
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "Bearer "+yelpAPIKey)
+	req.Header.Add("Authorization", "Bearer "+config.YelpAPIKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
