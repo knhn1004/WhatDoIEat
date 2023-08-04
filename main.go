@@ -20,57 +20,10 @@ import (
 
 	"github.com/knhn1004/WhatDoIEat/internal/bot"
 	"github.com/knhn1004/WhatDoIEat/internal/config"
+	"github.com/knhn1004/WhatDoIEat/internal/models"
 )
 
-type Ingredient struct {
-	Ingredient string `json:"ingredient"`
-	Quantity   string `json:"quantity"`
-}
-
-type Recipe struct {
-	Meal             string       `json:"meal"`
-	Name             string       `json:"name"`
-	ShortDescription string       `json:"short_description"`
-	UserId           string       `json:"user_id"`
-	ImageURL         string       `json:"image_url"`
-	Date             string       `json:"date"`
-	Ingredients      []Ingredient `json:"ingredients"`
-	Steps            []string     `json:"steps"`
-}
-
 const yelpAPIEndpoint = "https://api.yelp.com/v3/businesses/search"
-
-type YelpResponse struct {
-	Businesses []Business `json:"businesses"`
-}
-
-type Business struct {
-	Location Location `json:"location"`
-	Name     string   `json:"name"`
-	State    string   `json:"state"`
-	Phone    string   `json:"phone"`
-	URL      string   `json:"url"`
-	ImageURL string   `json:"image_url"`
-	Rating   float64  `json:"rating"`
-}
-
-type Location struct {
-	Address1 string `json:"address1"`
-	Address2 string `json:"address2"`
-	Address3 string `json:"address3"`
-	City     string `json:"city"`
-	ZipCode  string `json:"zip_code"`
-	State    string `json:"state"`
-	Country  string `json:"country"`
-}
-
-type ErrorType struct {
-	message string
-}
-
-func (e *ErrorType) Error() string {
-	return e.message
-}
 
 func main() {
 	err := config.Load()
@@ -128,9 +81,20 @@ func main() {
 		}
 	} */
 
-	// genRecipeOpenAI()
+	recipes, err := genRecipeOpenAI()
+	if err != nil {
+		fmt.Printf("genRecipeOpenAI error: %v\n", err)
+	} else {
+		for _, recipe := range recipes {
+			fmt.Println("Meal: ", recipe.Meal)
+			fmt.Println("Name: ", recipe.Name)
+			fmt.Println("Short Description: ", recipe.ShortDescription)
+			fmt.Println("Ingredients: ", recipe.Ingredients)
+			fmt.Println("Steps: ", recipe.Steps)
+		}
+	}
 
-	var businesses []Business
+	/* var businesses []models.Restaurant
 	options := map[string]string{
 		"radius":  "10000", // 10km
 		"sort_by": "rating",
@@ -149,7 +113,7 @@ func main() {
 			fmt.Println("Map: ", genGoogleMapsURL(business.Location))
 			fmt.Println("Image: ", business.ImageURL)
 		}
-	}
+	} */
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -157,7 +121,7 @@ func main() {
 	bot.Start(ctx)
 }
 
-func genRecipeOpenAI() ([]Recipe, error) {
+func genRecipeOpenAI() ([]models.Recipe, error) {
 	client := openai.NewClient(config.OpenAIKey)
 
 	sysPrompt := `
@@ -222,7 +186,7 @@ func genRecipeOpenAI() ([]Recipe, error) {
 	jsonStr := resp.Choices[0].Message.Content
 	jsonStr = strings.Trim(jsonStr, "`")
 	fmt.Println(jsonStr)
-	var recipes []Recipe
+	var recipes []models.Recipe
 	err = json.Unmarshal([]byte(jsonStr), &recipes)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -232,7 +196,7 @@ func genRecipeOpenAI() ([]Recipe, error) {
 	return recipes, nil
 }
 
-func getRestaurants(restaurantType, location string, options map[string]string) ([]Business, error) {
+func getRestaurants(restaurantType, location string, options map[string]string) ([]models.Restaurant, error) {
 	if location == "" {
 		location = "San Jose"
 	}
@@ -270,7 +234,7 @@ func getRestaurants(restaurantType, location string, options map[string]string) 
 		return nil, fmt.Errorf("received non-200 response status: %d %s. Response body: %s", resp.StatusCode, resp.Status, buf.String())
 	}
 
-	var yelpResp YelpResponse
+	var yelpResp models.YelpResponse
 	err = json.Unmarshal(buf.Bytes(), &yelpResp)
 	if err != nil {
 		return nil, err
@@ -279,7 +243,7 @@ func getRestaurants(restaurantType, location string, options map[string]string) 
 	return yelpResp.Businesses, nil
 }
 
-func genGoogleMapsURL(loc Location) string {
+func genGoogleMapsURL(loc models.Location) string {
 	baseURL := "https://www.google.com/maps/search/?api=1&query="
 
 	// Concatenate address details
