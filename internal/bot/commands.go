@@ -12,6 +12,9 @@ var (
 	PingCmd = &slacker.CommandDefinition{
 		Command: "ping",
 		Handler: handlePing,
+		Middlewares: []slacker.CommandMiddlewareHandler{
+			logUserMiddleware(),
+		},
 	}
 
 	UploadCmd = &slacker.CommandDefinition{
