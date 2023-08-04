@@ -12,15 +12,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cohere-ai/cohere-go"
 	"github.com/google/uuid"
 	"github.com/minoplhy/duckduckgo-images-api"
 	supa "github.com/nedpals/supabase-go"
-	openai "github.com/sashabaranov/go-openai"
 
 	"github.com/knhn1004/WhatDoIEat/internal/bot"
 	"github.com/knhn1004/WhatDoIEat/internal/config"
 	"github.com/knhn1004/WhatDoIEat/internal/models"
+	"github.com/knhn1004/WhatDoIEat/internal/services"
 )
 
 const yelpAPIEndpoint = "https://api.yelp.com/v3/businesses/search"
@@ -34,54 +33,12 @@ func main() {
 	appToken := config.AppToken
 
 	bot.InitializeBot(botToken, appToken)
+	services.StartServices()
 
 	supabase := supa.CreateClient(config.SupabaseURL, config.SupabaseURL)
 	fmt.Printf("supabase: %v\n", supabase) // TODO: remove this
 
-	co, err := cohere.CreateClient(config.CohereKey)
-	if err != nil {
-		fmt.Printf("cohere error: %v\n", err)
-	}
-	fmt.Printf("cohere: %v\n", co) // TODO: remove this
-
-	/* res, err := co.Classify(cohere.ClassifyOptions{
-		Examples: []cohere.Example{
-			{
-				Text:  "I love you",
-				Label: "positive",
-			},
-			{
-				Text:  "I like you",
-				Label: "positive",
-			},
-			{
-				Text:  "I hate you",
-				Label: "negative",
-			},
-			{
-				Text:  "I don't like bananas",
-				Label: "negative",
-			},
-		},
-		Inputs: []string{
-			"I like bananas",
-			"I love milk",
-		},
-	})
-
-	if err != nil {
-		fmt.Printf("Classify error: %v\n", err)
-	} else {
-		for _, classification := range res.Classifications {
-			if classification.Prediction == "positive" {
-				fmt.Println("👍️")
-			} else {
-				fmt.Println("👎️")
-			}
-		}
-	} */
-
-	recipes, err := genRecipeOpenAI()
+	recipes, err := services.GenRecipeOpenAI()
 	if err != nil {
 		fmt.Printf("genRecipeOpenAI error: %v\n", err)
 	} else {
@@ -119,81 +76,6 @@ func main() {
 	defer cancel()
 
 	bot.Start(ctx)
-}
-
-func genRecipeOpenAI() ([]models.Recipe, error) {
-	client := openai.NewClient(config.OpenAIKey)
-
-	sysPrompt := `
-            assistant is an AI nutritionist
-            given a user data, provide the next meals recipe a user can have today
-            the output should be in the following json format
-            ` + "````" + `
-            [
-              {
-              "meal": "breakfast",
-              "name": "",
-              "short_description": "",
-              "ingredients": [
-                {"ingredient": "ingrdient name", "quantity": "quantity unit"},
-                ...
-              ],
-              "steps": []
-              },
-              ...
-            ]
-            ` + "````"
-	type Preferences struct {
-		Styles    []string `json:"styles"`
-		Diets     []string `json:"diets"`
-		Allergies []string `json:"allergies"`
-		Dislikes  []string `json:"dislikes"`
-		Likes     []string `json:"likes"`
-	}
-	// preferences for food and diet
-	pref := Preferences{
-		Styles:    []string{"mediterranean", "vegan"},
-		Diets:     []string{"keto", "paleo"},
-		Allergies: []string{"dairy", "peanuts"},
-		Dislikes:  []string{"broccoli", "carrots"},
-		Likes:     []string{"chicken", "beef"},
-	}
-	prefJson, err := json.Marshal(pref)
-	if err != nil {
-		log.Fatal(err)
-	}
-	userPrompt := "user preferences: " + "```\n" + string(prefJson) + "```\n" + " Please only output the JSON, don't respond to me in any human language, just output nothing but JSON"
-	resp, err := client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: sysPrompt,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: userPrompt,
-				},
-			},
-			Temperature: 0,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	jsonStr := resp.Choices[0].Message.Content
-	jsonStr = strings.Trim(jsonStr, "`")
-	fmt.Println(jsonStr)
-	var recipes []models.Recipe
-	err = json.Unmarshal([]byte(jsonStr), &recipes)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return nil, err
-	}
-
-	return recipes, nil
 }
 
 func getRestaurants(restaurantType, location string, options map[string]string) ([]models.Restaurant, error) {
