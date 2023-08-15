@@ -7,6 +7,7 @@ import (
 	"github.com/knhn1004/WhatDoIEat/internal/bot"
 	"github.com/knhn1004/WhatDoIEat/internal/config"
 	"github.com/knhn1004/WhatDoIEat/internal/services"
+	"github.com/knhn1004/WhatDoIEat/internal/web"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 
 	bot.InitializeBot(config.BotToken, config.AppToken)
 	services.StartServices()
+	web.InitWeb()
 
 	/* recipes, err := services.GenRecipeOpenAI()
 	if err != nil {

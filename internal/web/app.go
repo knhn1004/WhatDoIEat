@@ -1,10 +1,6 @@
-package services
+package web
 
-import (
-	"github.com/gin-gonic/gin"
-
-	"github.com/knhn1004/WhatDoIEat/internal/web"
-)
+import "github.com/gin-gonic/gin"
 
 var r *gin.Engine
 
@@ -18,7 +14,7 @@ func InitWeb() {
 	r.Static("/static", "web/static")
 
 	// Routes
-	web.SetupRoutes(r)
+	SetupRoutes(r)
 
 	go r.Run(":8080")
 }

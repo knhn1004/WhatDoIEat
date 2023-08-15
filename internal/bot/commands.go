@@ -1,9 +1,11 @@
 package bot
 
 import (
+	"log"
 	"strconv"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/shomali11/slacker/v2"
 	"github.com/slack-go/slack"
 
@@ -32,10 +34,16 @@ var Commands = []*slacker.CommandDefinition{
 	{
 		Command: "find <query>",
 		Handler: handleFindRestaurant,
+		Middlewares: []slacker.CommandMiddlewareHandler{
+			logUserMiddleware(),
+		},
 	},
 	{
 		Command: "pref",
 		Handler: handlePref,
+		Middlewares: []slacker.CommandMiddlewareHandler{
+			logUserMiddleware(),
+		},
 	},
 }
 
@@ -137,10 +145,25 @@ func formatLocation(loc models.Location) string {
 }
 
 func handlePref(ctx *slacker.CommandContext) {
+	userId := ctx.Event().UserID
+
+	// Create a new token object
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userId": userId,
+		"exp":    time.Now().Add(24 * time.Hour).Unix(), // Token expiration: 24 hours from now
+	})
+
+	// Sign the token with the secret key
+	tokenString, err := token.SignedString([]byte(config.AppToken))
+	if err != nil {
+		log.Fatalf("Error signing token: %v", err)
+		return
+	}
+
 	preferencesEndpoint := "/pref"
 	fullURL := config.ServerAddr + preferencesEndpoint
 
-	message := slack.NewTextBlockObject(slack.MarkdownType, "Click the link below to set your preferences:\n"+fullURL, false, false)
+	message := slack.NewTextBlockObject(slack.MarkdownType, "Click the link below to set your preferences:\n"+fullURL+"?token="+tokenString, false, false)
 	blocks := []slack.Block{}
 
 	blocks = append(blocks, slack.NewContextBlock("preferences_block", message))
