@@ -6,7 +6,7 @@ import (
 	"github.com/minoplhy/duckduckgo-images-api"
 )
 
-func getImageUrlFromText(keyword string) (string, error) {
+func GetImageUrlFromText(keyword string) (string, error) {
 	var img string
 	serp := goduckgo.Search(goduckgo.Query{Keyword: keyword})
 	if len(serp.Results) > 0 {

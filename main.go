@@ -20,19 +20,6 @@ func main() {
 	services.StartServices()
 	web.InitWeb()
 
-	/* recipes, err := services.GenRecipeOpenAI()
-	if err != nil {
-		fmt.Printf("genRecipeOpenAI error: %v\n", err)
-	} else {
-		for _, recipe := range recipes {
-			fmt.Println("Meal: ", recipe.Meal)
-			fmt.Println("Name: ", recipe.Name)
-			fmt.Println("Short Description: ", recipe.ShortDescription)
-			fmt.Println("Ingredients: ", recipe.Ingredients)
-			fmt.Println("Steps: ", recipe.Steps)
-		}
-	} */
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

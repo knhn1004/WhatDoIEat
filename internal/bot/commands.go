@@ -1,8 +1,10 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -41,6 +43,13 @@ var Commands = []*slacker.CommandDefinition{
 	{
 		Command: "pref",
 		Handler: handlePref,
+		Middlewares: []slacker.CommandMiddlewareHandler{
+			logUserMiddleware(),
+		},
+	},
+	{
+		Command: "recipe",
+		Handler: handleRecipe,
 		Middlewares: []slacker.CommandMiddlewareHandler{
 			logUserMiddleware(),
 		},
@@ -170,4 +179,59 @@ func handlePref(ctx *slacker.CommandContext) {
 
 	// Send the constructed block message to Slack.
 	ctx.Response().ReplyBlocks(blocks)
+}
+
+func handleRecipe(ctx *slacker.CommandContext) {
+	// 1. Initial message
+	t1, _ := ctx.Response().Reply("Generating your daily recipe 🍳...")
+
+	// Use a channel to retrieve the results from the goroutine
+	resultChannel := make(chan []models.Recipe, 1)
+	errorChannel := make(chan error, 1)
+
+	go func() {
+		recipes, err := services.GenRecipeOpenAI()
+		if err != nil {
+			errorChannel <- err
+			return
+		}
+		resultChannel <- recipes
+	}()
+
+	select {
+	case recipes := <-resultChannel:
+		var attachments []slack.Attachment
+		for _, recipe := range recipes {
+			// Convert the Recipe data into readable text
+			text := "Name: " + recipe.Name + "\n" +
+				"Short Description: " + recipe.ShortDescription + "\n" +
+				"Ingredients: " + formatIngredients(recipe.Ingredients) + "\n" +
+				"Steps: " + strings.Join(recipe.Steps, ", ")
+
+			imgUrl, err := services.GetImageUrlFromText(recipe.Meal)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			attachment := slack.Attachment{
+				Color:    "good",
+				Title:    "Meal: " + recipe.Meal,
+				Text:     text,
+				ImageURL: imgUrl,
+			}
+			attachments = append(attachments, attachment)
+		}
+		ctx.Response().Reply("Here are the recipes we generated for you:", slacker.WithReplace(t1), slacker.WithAttachments(attachments))
+
+	case err := <-errorChannel:
+		ctx.Response().Reply("Error generating recipe: "+err.Error(), slacker.WithReplace(t1))
+	}
+}
+
+func formatIngredients(ingredients []models.Ingredient) string {
+	var formattedIngredients []string
+	for _, ingredient := range ingredients {
+		formattedIngredients = append(formattedIngredients, ingredient.Quantity+" of "+ingredient.Ingredient)
+	}
+	return strings.Join(formattedIngredients, ", ")
 }
