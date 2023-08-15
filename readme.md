@@ -15,7 +15,7 @@ Meet WhatDoIEat, the foodie bot crafted for busy Silicon Valley professionals. T
 
 ## Built With
 
-- GoLang
+- GoLang, slacker-go, duckduckgo, gin-gonic, htmx, supabase, OpenAI, GoogleAPI, YelpAPI, and more
 
 ## Getting Started
 

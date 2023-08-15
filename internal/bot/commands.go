@@ -205,10 +205,10 @@ func handleRecipe(ctx *slacker.CommandContext) {
 			// Convert the Recipe data into readable text
 			text := "Name: " + recipe.Name + "\n" +
 				"Short Description: " + recipe.ShortDescription + "\n" +
-				"Ingredients: " + formatIngredients(recipe.Ingredients) + "\n" +
-				"Steps: " + strings.Join(recipe.Steps, ", ")
+				"Ingredients:\n" + formatIngredients(recipe.Ingredients) + "\n" +
+				"Steps:\n" + formatSteps(recipe.Steps)
 
-			imgUrl, err := services.GetImageUrlFromText(recipe.Meal)
+			imgUrl, err := services.GetImageUrlFromText(recipe.Name)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -231,7 +231,15 @@ func handleRecipe(ctx *slacker.CommandContext) {
 func formatIngredients(ingredients []models.Ingredient) string {
 	var formattedIngredients []string
 	for _, ingredient := range ingredients {
-		formattedIngredients = append(formattedIngredients, ingredient.Quantity+" of "+ingredient.Ingredient)
+		formattedIngredients = append(formattedIngredients, "• "+ingredient.Quantity+" of "+ingredient.Ingredient)
 	}
-	return strings.Join(formattedIngredients, ", ")
+	return strings.Join(formattedIngredients, "\n")
+}
+
+func formatSteps(steps []string) string {
+	var formattedSteps []string
+	for i, step := range steps {
+		formattedSteps = append(formattedSteps, fmt.Sprintf("%d. %s", i+1, step))
+	}
+	return strings.Join(formattedSteps, "\n")
 }
