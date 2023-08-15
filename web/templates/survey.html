@@ -3,7 +3,7 @@
 <div class="p-6 max-w-md mx-auto">
   <h1 class="text-2xl font-semibold mb-4">{{ .Title }}</h1>
 
-  <form hx-post="/save-pref" hx-swap="outerHTML">
+  <form hx-post="/save-pref" hx-swap="none">
     <!-- Loop through preferences and create styled checkboxes -->
     {{ range $prefName, $prefValue := .Preferences }}
     <div class="mb-2">

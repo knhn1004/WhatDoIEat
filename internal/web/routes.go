@@ -9,4 +9,5 @@ import (
 
 func SetupRoutes(r *gin.Engine) {
 	r.GET("/pref", controllers.SurveyHandler)
+	r.POST("/save-pref", controllers.SavePrefHandler)
 }

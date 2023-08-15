@@ -137,12 +137,9 @@ func formatLocation(loc models.Location) string {
 }
 
 func handlePref(ctx *slacker.CommandContext) {
-	// Define your server address and the endpoint for preferences.
-	// Update 'your-server-address' with the correct domain or IP where your web server is hosted.
 	preferencesEndpoint := "/pref"
 	fullURL := config.ServerAddr + preferencesEndpoint
 
-	// Construct the markdown message with the URL
 	message := slack.NewTextBlockObject(slack.MarkdownType, "Click the link below to set your preferences:\n"+fullURL, false, false)
 	blocks := []slack.Block{}
 
