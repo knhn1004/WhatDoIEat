@@ -31,27 +31,6 @@ func main() {
 		}
 	} */
 
-	/* var businesses []models.Restaurant
-	options := map[string]string{
-		"radius":  "10000", // 10km
-		"sort_by": "rating",
-		"limit":   "5",
-	}
-	businesses, err = services.GetRestaurants("Japanese", "", options)
-	if err != nil {
-		fmt.Printf("getRestaurants error: %v\n", err)
-	} else {
-		for _, business := range businesses {
-			fmt.Println("Name: ", business.Name)
-			fmt.Println("Phone: ", business.Phone)
-			fmt.Println("URL: ", business.URL)
-			fmt.Println("Rating: ", business.Rating)
-			fmt.Println("Location: ", business.Location)
-			fmt.Println("Map: ", services.GenGoogleMapsURL(business.Location))
-			fmt.Println("Image: ", business.ImageURL)
-		}
-	} */
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
