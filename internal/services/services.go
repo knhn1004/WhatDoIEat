@@ -4,4 +4,5 @@ func StartServices() {
 	InitOpenAI()
 	InitCohere()
 	InitSupabase()
+	InitWeb()
 }
