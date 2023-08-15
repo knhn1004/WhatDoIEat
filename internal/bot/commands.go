@@ -7,6 +7,7 @@ import (
 	"github.com/shomali11/slacker/v2"
 	"github.com/slack-go/slack"
 
+	"github.com/knhn1004/WhatDoIEat/internal/config"
 	"github.com/knhn1004/WhatDoIEat/internal/models"
 	"github.com/knhn1004/WhatDoIEat/internal/services"
 )
@@ -31,6 +32,10 @@ var Commands = []*slacker.CommandDefinition{
 	{
 		Command: "find <query>",
 		Handler: handleFindRestaurant,
+	},
+	{
+		Command: "pref",
+		Handler: handlePref,
 	},
 }
 
@@ -129,4 +134,20 @@ func formatLocation(loc models.Location) string {
 		address += ", " + loc.Address3
 	}
 	return address + ", " + loc.City + ", " + loc.ZipCode + ", " + loc.State + ", " + loc.Country
+}
+
+func handlePref(ctx *slacker.CommandContext) {
+	// Define your server address and the endpoint for preferences.
+	// Update 'your-server-address' with the correct domain or IP where your web server is hosted.
+	preferencesEndpoint := "/pref"
+	fullURL := config.ServerAddr + preferencesEndpoint
+
+	// Construct the markdown message with the URL
+	message := slack.NewTextBlockObject(slack.MarkdownType, "Click the link below to set your preferences:\n"+fullURL, false, false)
+	blocks := []slack.Block{}
+
+	blocks = append(blocks, slack.NewContextBlock("preferences_block", message))
+
+	// Send the constructed block message to Slack.
+	ctx.Response().ReplyBlocks(blocks)
 }

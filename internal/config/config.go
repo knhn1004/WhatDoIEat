@@ -39,6 +39,9 @@ var (
 		{&YelpAPIKey, "YELP_API_KEY"},
 		{&OpenAIKey, "OPENAI_API_KEY"},
 	}
+
+	// Web
+	ServerAddr string = "http://localhost:8080" // TODO: modular and load ip from env
 )
 
 // Load reads config from .env file

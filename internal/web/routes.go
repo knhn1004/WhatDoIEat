@@ -8,5 +8,5 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
-	r.GET("/survey", controllers.SurveyHandler)
+	r.GET("/pref", controllers.SurveyHandler)
 }
