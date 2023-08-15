@@ -8,25 +8,23 @@ import (
 )
 
 // Command definitions
-var (
-	PingCmd = &slacker.CommandDefinition{
+var Commands = []*slacker.CommandDefinition{
+	{
 		Command: "ping",
 		Handler: handlePing,
 		Middlewares: []slacker.CommandMiddlewareHandler{
 			logUserMiddleware(),
 		},
-	}
-
-	UploadCmd = &slacker.CommandDefinition{
+	},
+	{
 		Command: "upload <sentence>",
 		Handler: handleUpload,
-	}
-
-	EchoCmd = &slacker.CommandDefinition{
+	},
+	{
 		Command: "echo {word}",
 		Handler: handleEcho,
-	}
-)
+	},
+}
 
 func handlePing(ctx *slacker.CommandContext) {
 	t1, _ := ctx.Response().Reply("about to be replaced 🚧️")

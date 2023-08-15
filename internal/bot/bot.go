@@ -16,9 +16,9 @@ func InitializeBot(botToken, appToken string) {
 
 func registerHandlers() {
 	// Register command defs
-	bot.AddCommand(PingCmd)
-	bot.AddCommand(UploadCmd)
-	bot.AddCommand(EchoCmd)
+	for _, cmd := range Commands {
+		bot.AddCommand(cmd)
+	}
 }
 
 func Start(ctx context.Context) error {
