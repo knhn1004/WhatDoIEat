@@ -1,6 +1,34 @@
 <!-- web/templates/survey.html -->
 {{ template "base.html" . }} {{ define "content" }}
-<div>
-  <!-- Your survey content goes here -->
+<div class="p-6 max-w-md mx-auto">
+  <h1 class="text-2xl font-semibold mb-4">{{ .Title }}</h1>
+
+  <form hx-post="/save-pref" hx-swap="outerHTML">
+    <!-- Loop through preferences and create styled checkboxes -->
+    {{ range $prefName, $prefValue := .Preferences }}
+    <div class="mb-2">
+      <label class="inline-flex items-center">
+        <input
+          type="checkbox"
+          name="preferences"
+          value="{{ $prefName }}"
+          {{
+          if
+          $prefValue
+          }}checked{{
+          end
+          }}
+          class="form-checkbox h-5 w-5 text-green-600"
+        />
+        <span class="ml-2">{{ $prefName }}</span>
+      </label>
+    </div>
+    {{ end }}
+
+    <!-- Save button -->
+    <button type="submit" class="bg-blue-500 text-white p-2 mt-4 rounded-full">
+      Save Preferences
+    </button>
+  </form>
 </div>
 {{ end }}
