@@ -7,6 +7,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type Configuration struct {
+	Target  *string
+	KeyName string
+}
+
 var (
 	// Slack
 	BotToken string
@@ -24,6 +29,16 @@ var (
 
 	// OpenAI
 	OpenAIKey string
+
+	configs = []Configuration{
+		{&BotToken, "SLACK_BOT_TOKEN"},
+		{&AppToken, "SLACK_APP_TOKEN"},
+		{&SupabaseURL, "SUPABASE_URL"},
+		{&SupabaseKey, "SUPABASE_ADMIN_KEY"},
+		{&CohereKey, "COHERE_API_KEY"},
+		{&YelpAPIKey, "YELP_API_KEY"},
+		{&OpenAIKey, "OPENAI_API_KEY"},
+	}
 )
 
 // Load reads config from .env file
@@ -33,53 +48,12 @@ func Load() error {
 		return err
 	}
 
-	// Bot token
-	if v, ok := os.LookupEnv("SLACK_BOT_TOKEN"); !ok {
-		return errors.New("SLACK_BOT_TOKEN required")
-	} else {
-		BotToken = v
-	}
-
-	// App token
-	if v, ok := os.LookupEnv("SLACK_APP_TOKEN"); !ok {
-		return errors.New("SLACK_APP_TOKEN required")
-	} else {
-		AppToken = v
-	}
-
-	// Supabase URL
-	if v, ok := os.LookupEnv("SUPABASE_URL"); !ok {
-		return errors.New("SUPABASE_URL required")
-	} else {
-		SupabaseURL = v
-	}
-
-	// Supabase key
-	if v, ok := os.LookupEnv("SUPABASE_ADMIN_KEY"); !ok {
-		return errors.New("SUPABASE_ADMIN_KEY required")
-	} else {
-		SupabaseKey = v
-	}
-
-	// Cohere key
-	if v, ok := os.LookupEnv("COHERE_API_KEY"); !ok {
-		return errors.New("COHERE_API_KEY required")
-	} else {
-		CohereKey = v
-	}
-
-	// Yelp API key
-	if v, ok := os.LookupEnv("YELP_API_KEY"); !ok {
-		return errors.New("YELP_API_KEY required")
-	} else {
-		YelpAPIKey = v
-	}
-
-	// OpenAI API key
-	if v, ok := os.LookupEnv("OPENAI_API_KEY"); !ok {
-		return errors.New("OPENAI_API_KEY required")
-	} else {
-		OpenAIKey = v
+	for _, config := range configs {
+		if value, ok := os.LookupEnv(config.KeyName); !ok {
+			return errors.New(config.KeyName + " required")
+		} else {
+			*config.Target = value
+		}
 	}
 
 	return nil
